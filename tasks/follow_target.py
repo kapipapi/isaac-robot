@@ -1,8 +1,11 @@
 from collections import OrderedDict
+import carb
 from omni.isaac.core.objects.cuboid import DynamicCuboid, VisualCuboid
+from omni.isaac.core.prims.rigid_prim import RigidPrim
 from omni.isaac.core.tasks.base_task import BaseTask
+from omni.isaac.core.utils.nucleus import get_assets_root_path
 from omni.isaac.core.utils.rotations import euler_angles_to_quat
-from omni.isaac.core.utils.stage import get_stage_units
+from omni.isaac.core.utils.stage import add_reference_to_stage, get_stage_units
 from omni.isaac.franka import Franka
 from omni.isaac.core.utils.prims import is_prim_path_valid
 from omni.isaac.core.utils.string import find_unique_string_name
@@ -181,6 +184,45 @@ class FollowTarget(BaseTask):
         """[summary]
         """
         return
+    
+    def add_shelf(self, position: np.ndarray = None):
+        """[summary]
+
+        Args:
+            position (np.ndarray, optional): [description]. Defaults to np.array([0.5, 0.1, 1.0]).
+        """
+        _assets_root_path = get_assets_root_path()
+        if _assets_root_path is None:
+            carb.log_error("Could not find Isaac Sim assets folder")
+            return
+
+
+        shelf_prim_path = find_unique_string_name(
+            initial_name="/World/bin", is_unique_fn=lambda x: not is_prim_path_valid(x)
+        )
+
+        shelf_name = find_unique_string_name(initial_name="packing_bin", is_unique_fn=lambda x: not self.scene.object_exists(x))
+
+        add_reference_to_stage(
+            usd_path=_assets_root_path+"/Isaac/Props/Forklift/forklift.usd", 
+            prim_path=shelf_prim_path
+        )
+        
+        print(_assets_root_path)
+
+        if position is None:
+            position = np.array([0.5, -2.0, 1.0]) / get_stage_units()
+
+        shelf = self.scene.add(
+            RigidPrim(
+                prim_path=shelf_prim_path,
+                name=shelf_name,
+                position=np.array([0.35, 0.15, -0.40]) / get_stage_units(),
+                orientation=euler_angles_to_quat(np.array([0, 0, 0])),
+            )
+        )
+
+        return shelf
 
     def add_obstacle(self, position: np.ndarray = None):
         """[summary]

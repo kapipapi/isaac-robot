@@ -23,8 +23,9 @@ my_controller = RMPFlowController(name="target_follower_controller", robot_artic
 articulation_controller = my_franka.get_articulation_controller()
 
 
-obstacle = my_task.add_obstacle()
-print(obstacle)
+shelf = my_task.add_shelf()
+print(shelf)
+
 
 while simulation_app.is_running():
     my_world.step(render=True)
