@@ -29,7 +29,7 @@ class FollowTarget(BaseTask):
         self._target_orientation = None
         self._target_visual_material = None
         if self._target_position is None:
-            self._target_position = np.array([0, 0.1, 0.7]) / get_stage_units()
+            self._target_position = np.array([0.5, 0, 0.5]) / get_stage_units()
 
         self._obstacle_cubes = OrderedDict()
 
@@ -46,7 +46,7 @@ class FollowTarget(BaseTask):
         self._target_name = find_unique_string_name(
             initial_name="target", is_unique_fn=lambda x: not self.scene.object_exists(x)
         )
-        self._target_orientation = euler_angles_to_quat(np.array([-np.pi, 0, np.pi]))
+        self._target_orientation = euler_angles_to_quat(np.array([np.pi, -np.pi/2, 0]))
 
         self.set_params(
             target_prim_path=self._target_prim_path,
@@ -137,7 +137,7 @@ class FollowTarget(BaseTask):
         """
         return Franka(
             prim_path="/World/Franka",
-            position=[0.0, 0.0, 1.5],
+            position=[0.0, 0.0, 1.0],
             orientation=euler_angles_to_quat(np.array([0.0, np.pi, 0.0])),
         )
 
@@ -198,27 +198,28 @@ class FollowTarget(BaseTask):
 
 
         shelf_prim_path = find_unique_string_name(
-            initial_name="/World/bin", is_unique_fn=lambda x: not is_prim_path_valid(x)
+            initial_name="/World/shelf", is_unique_fn=lambda x: not is_prim_path_valid(x)
         )
 
-        shelf_name = find_unique_string_name(initial_name="packing_bin", is_unique_fn=lambda x: not self.scene.object_exists(x))
+        shelf_name = find_unique_string_name(initial_name="shelf", is_unique_fn=lambda x: not self.scene.object_exists(x))
 
         add_reference_to_stage(
-            usd_path=_assets_root_path+"/Isaac/Props/Forklift/forklift.usd", 
+            usd_path=_assets_root_path+"/Isaac/Environments/Simple_Warehouse/Props/SM_RackShelf_01.usd", 
             prim_path=shelf_prim_path
         )
         
         print(_assets_root_path)
 
         if position is None:
-            position = np.array([0.5, -2.0, 1.0]) / get_stage_units()
+            position = np.array([-2.0, -2.0, 1.0]) / get_stage_units()
 
         shelf = self.scene.add(
             RigidPrim(
                 prim_path=shelf_prim_path,
                 name=shelf_name,
-                position=np.array([0.35, 0.15, -0.40]) / get_stage_units(),
-                orientation=euler_angles_to_quat(np.array([0, 0, 0])),
+                position=position / get_stage_units(),
+                orientation=euler_angles_to_quat(np.array([0, 0, np.pi/2])),
+                scale=np.array([0.4, 0.4, 0.4]),
             )
         )
 
