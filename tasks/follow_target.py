@@ -9,6 +9,7 @@ from omni.isaac.core.utils.stage import add_reference_to_stage, get_stage_units
 from omni.isaac.franka import Franka
 from omni.isaac.core.utils.prims import is_prim_path_valid
 from omni.isaac.core.utils.string import find_unique_string_name
+from omni.isaac.sensor import Camera
 from typing import Optional
 import numpy as np
 
@@ -46,7 +47,7 @@ class FollowTarget(BaseTask):
         self._target_name = find_unique_string_name(
             initial_name="target", is_unique_fn=lambda x: not self.scene.object_exists(x)
         )
-        self._target_orientation = euler_angles_to_quat(np.array([np.pi, -np.pi/2, 0]))
+        self._target_orientation = euler_angles_to_quat(np.array([np.pi, -np.pi/2, 0.0]))
 
         self.set_params(
             target_prim_path=self._target_prim_path,
@@ -57,6 +58,17 @@ class FollowTarget(BaseTask):
 
         self._robot = self.set_robot()
         scene.add(self._robot)
+
+        camera = Camera(
+            prim_path="/World/camera",
+            position=np.array([0.30, 0.0, 1.2]),
+            frequency=20,
+            resolution=(256, 256),
+            orientation=euler_angles_to_quat(np.array([0, 35, 0]), degrees=True),
+        )
+
+        camera.set_focal_length(1)
+        camera.set_clipping_range(0.1, 1000)
 
         self._task_objects[self._robot.name] = self._robot
         self._move_task_objects_to_their_frame()
@@ -137,8 +149,8 @@ class FollowTarget(BaseTask):
         """
         return Franka(
             prim_path="/World/Franka",
-            position=[0.0, 0.0, 1.0],
-            orientation=euler_angles_to_quat(np.array([0.0, np.pi, 0.0])),
+            position=[0.15, 0.0, 1],
+            orientation=euler_angles_to_quat(np.array([0.0, np.pi-np.pi/4, 0.0])),
         )
 
     def calculate_metrics(self) -> dict:
@@ -185,8 +197,10 @@ class FollowTarget(BaseTask):
         """
         return
     
-    def add_shelf(self, position: np.ndarray = None):
+    def add_object(self, path:str, name:str, position: np.ndarray = None, orientation: np.ndarray = np.array([0,0,0,0]), scale: np.ndarray = np.array([0,0,0])):
         """[summary]
+
+        example path "/Isaac/Environments/Simple_Warehouse/Props/SM_RackShelf_01.usd"
 
         Args:
             position (np.ndarray, optional): [description]. Defaults to np.array([0.5, 0.1, 1.0]).
@@ -197,33 +211,33 @@ class FollowTarget(BaseTask):
             return
 
 
-        shelf_prim_path = find_unique_string_name(
-            initial_name="/World/shelf", is_unique_fn=lambda x: not is_prim_path_valid(x)
+        object_prim_path = find_unique_string_name(
+            initial_name=f"/World/{name}", is_unique_fn=lambda x: not is_prim_path_valid(x)
         )
 
-        shelf_name = find_unique_string_name(initial_name="shelf", is_unique_fn=lambda x: not self.scene.object_exists(x))
+        object_name = find_unique_string_name(initial_name=name, is_unique_fn=lambda x: not self.scene.object_exists(x))
 
         add_reference_to_stage(
-            usd_path=_assets_root_path+"/Isaac/Environments/Simple_Warehouse/Props/SM_RackShelf_01.usd", 
-            prim_path=shelf_prim_path
+            usd_path=_assets_root_path+path, 
+            prim_path=object_prim_path
         )
         
         print(_assets_root_path)
 
         if position is None:
-            position = np.array([-2.0, -2.0, 1.0]) / get_stage_units()
+            position = np.array([-2.0, -1.5, 1.0]) / get_stage_units()
 
-        shelf = self.scene.add(
+        object_ = self.scene.add(
             RigidPrim(
-                prim_path=shelf_prim_path,
-                name=shelf_name,
+                prim_path=object_prim_path,
+                name=object_name,
                 position=position / get_stage_units(),
-                orientation=euler_angles_to_quat(np.array([0, 0, np.pi/2])),
-                scale=np.array([0.4, 0.4, 0.4]),
+                orientation=orientation,
+                scale=scale,
             )
         )
 
-        return shelf
+        return object_
 
     def add_obstacle(self, position: np.ndarray = None):
         """[summary]
