@@ -70,6 +70,17 @@ class FollowTarget(BaseTask):
         camera.set_focal_length(1)
         camera.set_clipping_range(0.1, 1000)
 
+        camera2 = Camera(
+            prim_path="/World/Franka/panda_link8/camera2",
+            translation=np.array([0.0, 0.0, 0.0]),
+            frequency=20,
+            resolution=(256, 256),
+            orientation=euler_angles_to_quat(np.array([90, -90, 90+135]), degrees=True),
+        )
+
+        camera2.set_focal_length(1)
+        camera2.set_clipping_range(0.1, 1000)
+
         self._task_objects[self._robot.name] = self._robot
         self._move_task_objects_to_their_frame()
 
