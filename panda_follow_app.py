@@ -4,6 +4,7 @@ simulation_app = SimulationApp({"headless": False})
 
 from tasks.follow_target import FollowTarget
 from omni.isaac.franka.controllers import RMPFlowController
+from omni.isaac.core.utils.types import ArticulationAction
 from omni.isaac.core import World
 
 import numpy as np
@@ -27,6 +28,8 @@ articulation_controller = my_franka.get_articulation_controller()
 
 pressed = 0
 offset = 0.05
+
+is_opening = True
 
 while simulation_app.is_running():
     my_world.step(render=True)
@@ -63,10 +66,38 @@ while simulation_app.is_running():
                 pos = pos + [offset, 0, 0]
                 target.set_local_pose(pos)
 
+            elif keyboard.is_pressed('k'):
+                print('You Pressed up!')
+                pressed = 7
+                pos = pos + [0, 0, offset]
+                target.set_local_pose(pos)
+
             elif keyboard.is_pressed('m'):
                 print('You Pressed up!')
+                pressed = 8
+                pos = pos - [0, 0, offset]
+                target.set_local_pose(pos)
+
+            elif keyboard.is_pressed('space'):
+                print('You Pressed space (',"open" if is_opening else "close",' gripper)!')
                 pressed = 5
-                # my_franka.
+                gripper_positions = my_franka.gripper.get_joint_positions()
+                if is_opening:
+                    my_franka.gripper.apply_action(
+                        ArticulationAction(joint_positions=[gripper_positions[0] + (0.005), gripper_positions[1] + (0.005)])
+                    )
+                else:
+                    my_franka.gripper.apply_action(
+                        ArticulationAction(joint_positions=[gripper_positions[0] - (0.005), gripper_positions[1] - (0.005)])
+                    )
+
+            elif keyboard.is_pressed('shift'):
+                print('You Pressed shift (change mode)!')
+                pressed = 6
+
+                is_opening = not is_opening
+
+                print("Now mode is: ", "open" if is_opening else "close")
 
 
         elif pressed == 1 and not keyboard.is_pressed('left'):
@@ -77,6 +108,15 @@ while simulation_app.is_running():
             pressed = 0
         elif pressed == 4 and not keyboard.is_pressed('up'):
             pressed = 0
+        elif pressed == 5 and not keyboard.is_pressed('space'):
+            pressed = 0
+        elif pressed == 6 and not keyboard.is_pressed('shift'):
+            pressed = 0
+        elif pressed == 7 and not keyboard.is_pressed('k'):
+            pressed = 0
+        elif pressed == 8 and not keyboard.is_pressed('m'):
+            pressed = 0
+
 
         actions = my_controller.forward(
             target_end_effector_position=observations[target_name]["position"],
