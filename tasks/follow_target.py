@@ -81,6 +81,8 @@ class FollowTarget(BaseTask):
         camera2.set_focal_length(1)
         camera2.set_clipping_range(0.1, 1000)
 
+        self.add_obstacle([0.5, 0.0, 0.5])
+
         self._task_objects[self._robot.name] = self._robot
         self._move_task_objects_to_their_frame()
 
